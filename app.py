@@ -2,7 +2,7 @@ import streamlit as st
 import time
 import json
 import os
-from AI家教项目 import AITutor # 引入你刚才写的家教类
+from ai_tutor import AITutor # 引入你刚才写的家教类
 HISTORY_FILE = "chat_history.json"
 
 def save_history(messages):
