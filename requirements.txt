@@ -1,0 +1,6 @@
+streamlit
+dashscope
+python-docx
+bcrypt
+langchain
+langchain-community
