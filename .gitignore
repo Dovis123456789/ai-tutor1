@@ -1,0 +1,15 @@
+*.db
+__pycache__/
+.idea/
+.vscode/
+*.pyc
+*.pyd
+*.dist-info/
+*.libs/
+bin/
+etc/
+share/
+models/
+streamlit/
+dashscope/
+langchain/
