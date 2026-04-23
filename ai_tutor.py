@@ -13,8 +13,9 @@ dashscope.api_key = "sk-9f6558ca077a481fa54d52e15c863146"
 class AITutor:
     def __init__(self, session_id=None):
         self.session_id = session_id if session_id else f"session_{int(time.time())}"
-        self.student_level = "小学五年级"
-        self.subject = "数学"
+        # 通用老师，不再设置年级和科目
+        self.student_level = None
+        self.subject = None
 
         # 持久化聊天历史
         self.message_history = SQLChatMessageHistory(
@@ -52,7 +53,8 @@ class AITutor:
         conn.close()
 
     def get_system_prompt(self):
-        return f"""你是{self.student_level}的{self.subject}家教老师。
+        # 通用老师提示词
+        return f"""你是一位耐心、亲切的AI家教老师，可以帮助学生学习各个学科的知识，包括数学、语文、英语、物理、化学、生物、历史、地理、政治等。请根据学生的问题提供准确、清晰的解答，语气活泼有鼓励性。
 
 【输出格式要求】非常重要，必须遵守！
 1. 每个段落之间要有一个空行。
@@ -157,15 +159,14 @@ class AITutor:
             return assistant_msg
 
     def generate_worksheet(self, topic, difficulty="中等", num_questions=5, grade=None):
-        if grade is None:
-            grade = self.student_level
-        prompt = f"""请严格按照【{grade}】的教学大纲和认知水平，生成 {difficulty} 难度的 {topic} 练习题，共 {num_questions} 道。
+        # 不再依赖 self.student_level，如果 grade 为 None 则生成通用标题
+        title_prefix = f"【{grade}】" if grade else ""
+        prompt = f"""请生成 {difficulty} 难度的 {topic} 练习题，共 {num_questions} 道。
 要求：
-1. 作业标题必须为：【{grade}】{topic}练习题
-2. 题目要适合{grade}学生。
-3. 必须按照以下 JSON 格式输出，不要有其他任何解释文字：
+1. 题目内容要适合学习该知识点的学生，难度适中。
+2. 输出必须严格按照以下 JSON 格式，不要有其他任何解释文字：
 {{
-    "title": "【{grade}】{topic}练习题",
+    "title": "{title_prefix}{topic}练习题",
     "questions": ["题目1", "题目2", ...],
     "answers": ["答案1", "答案2", ...]
 }}
@@ -182,17 +183,18 @@ class AITutor:
                 data = json.loads(json_match.group())
             else:
                 data = json.loads(content)
-            data["title"] = f"【{grade}】{topic}练习题"
+            data["title"] = f"{title_prefix}{topic}练习题"
             return data
-        except:
+        except Exception:
             return {
-                "title": f"【{grade}】{topic}练习题",
+                "title": f"{title_prefix}{topic}练习题",
                 "questions": [f"请计算：{topic}"],
                 "answers": ["略"]
             }
 
     def grade_homework(self, subject, grade_level, homework_content):
-        prompt = f"""你是{grade_level}的{subject}老师。请批改以下学生作业。
+        # 如果传入的是默认值，AI 会根据内容自动判断
+        prompt = f"""你是AI老师。请批改以下学生作业。
 
 作业内容：
 {homework_content}
@@ -229,7 +231,7 @@ class AITutor:
             if "mistakes" not in result:
                 result["mistakes"] = []
             return result
-        except:
+        except Exception:
             return {"score": 0, "total_score": 100, "mistakes": [], "comment": "解析失败，请重试"}
 
     def record_mistake(self, session_id, subject, grade_level, question, wrong_answer, correct_answer, knowledge_point, error_type):
@@ -309,7 +311,7 @@ class AITutor:
 
     def run(self):
         print("=" * 40)
-        print(f"AI家教：{self.student_level} {self.subject}老师")
+        print("AI家教：通用老师")
         print("输入 quit 退出")
         print("=" * 40)
         while True:
